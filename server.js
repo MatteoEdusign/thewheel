@@ -109,6 +109,7 @@ app.get('/wheel-view', async (req, res) => {
 
         // Filtrer les éventuels échecs complets si nécessaire, ou garder les placeholders
         console.log('✅ [Step 2] All student details fetched.');
+        console.log('🔍 [DEBUG] Final Student Names List:', JSON.stringify(studentNames, null, 2));
 
         if (studentNames.length === 0) {
             studentNames = ["Aucun élève trouvé"];
