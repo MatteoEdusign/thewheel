@@ -63,52 +63,35 @@ app.get('/wheel-view', async (req, res) => {
     }
 
     try {
-        // NOUVEL ENDPOINT : ext.edusign.fr
-        // Attention : cet endpoint renvoie les détails du cours.
-        // On espère y trouver la liste des étudiants avec leurs noms.
-        const response = await axios.get(`https://ext.edusign.fr/v1/course/${courseId}`, {
+        // RETOUR À L'ANCIEN ENDPOINT
+        // Maintenant qu'on a le bon courseId, on peut utiliser l'endpoint qui renvoie les NOMS.
+        const response = await axios.get(`https://api.edusign.fr/v1/course/${courseId}/students`, {
             headers: { 'Authorization': `Bearer ${API_KEY}` }
         });
 
-        console.log('✅ [API Edusign] Response received');
+        console.log('✅ [API Edusign] Response received from /students');
 
-        // DEBUG : Voir la structure brute
-        console.log('🔍 [DEBUG] Full API Response Data:', JSON.stringify(response.data, null, 2));
-
-        // Structure attendue : result.STUDENTS ou peut-être directement STUDENTS ?
-        const courseData = response.data.result || response.data;
-
-        if (!courseData) {
-            throw new Error('Aucune donnée trouvée dans la réponse API');
-        }
+        const result = response.data.result || [];
 
         // DEBUG LOGGING
-        console.log('🔍 [DEBUG] Course Data Keys:', Object.keys(courseData));
-
-        const studentsList = courseData.STUDENTS || [];
-
-        if (studentsList.length > 0) {
-            console.log(`🔍 [DEBUG] Found ${studentsList.length} students.`);
-            console.log('🔍 [DEBUG] First student sample:', JSON.stringify(studentsList[0], null, 2));
-        } else {
-            console.warn('⚠️ [DEBUG] No STUDENTS array found in response!');
+        console.log(`🔍 [DEBUG] Found ${result.length} students via /students endpoint.`);
+        if (result.length > 0) {
+            console.log('🔍 [DEBUG] First student sample:', JSON.stringify(result[0], null, 2));
         }
 
         let studentNames = [];
 
-        if (studentsList.length > 0) {
-            // Cas 1 : L'objet contient firstname/lastname (le meilleur cas)
-            if (studentsList[0].firstname) {
-                studentNames = studentsList.map(s => `${s.firstname} ${s.lastname ? s.lastname.charAt(0) + '.' : ''}`);
-            }
-            // Cas 2 : On a que des IDs... C'est embêtant.
-            else {
-                console.warn('⚠️ [API Warning] Pas de noms trouvés, seulement des IDs ?', studentsList[0]);
-                // Fallback : on affiche "Étudiant 1", "Étudiant 2" ou on tente l'ancien endpoint
-                // Pour ce fix, on va tenter de voir si on peut récupérer les infos autrement
-                // Mais pour éviter le crash, on met des placeholders si nécessaire
-                studentNames = studentsList.map((s, i) => `Étudiant ${i + 1}`);
-            }
+        if (result.length > 0) {
+            // On espère avoir firstname et lastname ici
+            studentNames = result.map(s => {
+                if (s.firstname && s.lastname) {
+                    return `${s.firstname} ${s.lastname.charAt(0)}.`;
+                } else if (s.name) {
+                    return s.name;
+                } else {
+                    return "Étudiant (Sans nom)";
+                }
+            });
         }
 
         if (studentNames.length === 0) {
