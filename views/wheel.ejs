@@ -114,10 +114,8 @@
         .center-circle.winner {
             width: 100px;
             height: 100px;
-            background: var(--edusign-yellow);
             font-weight: 700;
             font-size: 0.85rem;
-            color: var(--edusign-blue-green);
             text-align: center;
             padding: 5px;
             line-height: 1.2;
@@ -350,6 +348,7 @@
                     // Sécurité index
                     const safeIndex = Math.max(0, Math.min(winnerIndex, students.length - 1));
                     const winner = students[safeIndex];
+                    const winnerColor = colors[safeIndex % colors.length];
 
                     // Afficher le gagnant dans le cercle central
                     const centerCircle = document.getElementById('centerCircle');
@@ -357,6 +356,9 @@
                     const winnerDisplay = document.getElementById('winnerDisplay');
 
                     centerCircle.classList.add('winner');
+                    centerCircle.style.background = winnerColor;
+                    // Texte blanc si fond foncé, sinon bleu-vert
+                    centerCircle.style.color = (winnerColor === '#1C414D') ? '#FFFFFF' : '#1C414D';
                     centerIcon.style.display = 'none';
                     winnerDisplay.style.display = 'block';
                     winnerDisplay.textContent = winner;
