@@ -1,10 +1,12 @@
 const express = require('express');
 const axios = require('axios');
+const path = require('path');
 const app = express();
 
 app.use(express.json());
 app.set('view engine', 'ejs');
-app.use(express.static('public')); // Pour servir des fichiers statiques si besoin
+app.set('views', path.join(__dirname, 'views')); // Chemin absolu pour Vercel
+app.use(express.static(path.join(__dirname, 'public'))); // Fichiers statiques
 
 // ---------------------------------------------------------
 // PORTE 1 : L'entrée pour Edusign (Block Builder)
