@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎲 La Roue du Hasard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: white;
+        }
+
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            background: linear-gradient(90deg, #e94560, #f39c12, #3498db);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .wheel-container {
+            position: relative;
+            width: 350px;
+            height: 350px;
+            margin: 20px 0;
+        }
+
+        #wheel {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            box-shadow: 
+                0 0 30px rgba(233, 69, 96, 0.4),
+                0 0 60px rgba(233, 69, 96, 0.2),
+                inset 0 0 20px rgba(0,0,0,0.3);
+            transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99);
+        }
+
+        .pointer {
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 20px solid transparent;
+            border-right: 20px solid transparent;
+            border-top: 40px solid #e94560;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.4));
+            z-index: 10;
+        }
+
+        .center-circle {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(145deg, #2d2d44, #1a1a2e);
+            border-radius: 50%;
+            box-shadow: 
+                0 4px 15px rgba(0,0,0,0.5),
+                inset 0 2px 5px rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            z-index: 5;
+        }
+
+        #spinBtn {
+            margin-top: 30px;
+            padding: 15px 50px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: white;
+            background: linear-gradient(135deg, #e94560, #c73e54);
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 
+                0 6px 20px rgba(233, 69, 96, 0.4),
+                0 3px 10px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        #spinBtn:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 
+                0 10px 30px rgba(233, 69, 96, 0.5),
+                0 5px 15px rgba(0,0,0,0.4);
+        }
+
+        #spinBtn:disabled {
+            background: linear-gradient(135deg, #666, #444);
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        #result {
+            margin-top: 30px;
+            padding: 20px 40px;
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.2);
+            font-size: 1.5rem;
+            font-weight: bold;
+            opacity: 0;
+            transform: scale(0.8);
+            transition: all 0.5s ease;
+        }
+
+        #result.show {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .winner-name {
+            background: linear-gradient(90deg, #f39c12, #e94560);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            pointer-events: none;
+            animation: confetti-fall 3s ease-out forwards;
+        }
+
+        @keyframes confetti-fall {
+            0% {
+                transform: translateY(-100vh) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+
+        .no-students {
+            text-align: center;
+            padding: 40px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 20px;
+            max-width: 400px;
+        }
+
+        .no-students p {
+            margin: 10px 0;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎲 La Roue du Hasard</h1>
+    
+    <div id="wheelSection">
+        <div class="wheel-container">
+            <div class="pointer"></div>
+            <canvas id="wheel" width="350" height="350"></canvas>
+            <div class="center-circle">🎯</div>
+        </div>
+        
+        <button id="spinBtn">🎰 Lancer la roue !</button>
+        
+        <div id="result">
+            <span>🎉 Le gagnant est : </span>
+            <span id="winnerName" class="winner-name"></span>
+        </div>
+    </div>
+
+    <div id="noStudents" class="no-students" style="display: none;">
+        <h2>😕 Aucun étudiant trouvé</h2>
+        <p>Il n'y a pas d'étudiants dans ce cours.</p>
+        <p>Vérifiez que des étudiants sont bien inscrits.</p>
+    </div>
+
+    <script>
+        const students = <%- students %>;
+        
+        if (students.length === 0) {
+            document.getElementById('wheelSection').style.display = 'none';
+            document.getElementById('noStudents').style.display = 'block';
+        } else {
+            const canvas = document.getElementById('wheel');
+            const ctx = canvas.getContext('2d');
+            const spinBtn = document.getElementById('spinBtn');
+            const result = document.getElementById('result');
+            const winnerName = document.getElementById('winnerName');
+            
+            // Couleurs vibrantes pour les segments
+            const colors = [
+                '#e94560', '#f39c12', '#3498db', '#2ecc71', 
+                '#9b59b6', '#1abc9c', '#e74c3c', '#34495e',
+                '#16a085', '#d35400', '#8e44ad', '#27ae60'
+            ];
+            
+            let currentRotation = 0;
+            let isSpinning = false;
+            
+            function drawWheel() {
+                const centerX = canvas.width / 2;
+                const centerY = canvas.height / 2;
+                const radius = Math.min(centerX, centerY) - 5;
+                const segmentAngle = (2 * Math.PI) / students.length;
+                
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                students.forEach((student, index) => {
+                    const startAngle = index * segmentAngle + currentRotation;
+                    const endAngle = startAngle + segmentAngle;
+                    
+                    // Dessiner le segment
+                    ctx.beginPath();
+                    ctx.moveTo(centerX, centerY);
+                    ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+                    ctx.closePath();
+                    ctx.fillStyle = colors[index % colors.length];
+                    ctx.fill();
+                    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    
+                    // Dessiner le texte
+                    ctx.save();
+                    ctx.translate(centerX, centerY);
+                    ctx.rotate(startAngle + segmentAngle / 2);
+                    ctx.textAlign = 'right';
+                    ctx.fillStyle = 'white';
+                    ctx.font = 'bold 12px Segoe UI';
+                    ctx.shadowColor = 'rgba(0,0,0,0.5)';
+                    ctx.shadowBlur = 3;
+                    
+                    // Tronquer le nom si trop long
+                    let displayName = student;
+                    if (displayName.length > 15) {
+                        displayName = displayName.substring(0, 12) + '...';
+                    }
+                    ctx.fillText(displayName, radius - 15, 4);
+                    ctx.restore();
+                });
+            }
+            
+            function spin() {
+                if (isSpinning) return;
+                
+                isSpinning = true;
+                spinBtn.disabled = true;
+                result.classList.remove('show');
+                
+                // Nombre aléatoire de tours (5-10) + position aléatoire
+                const spins = 5 + Math.random() * 5;
+                const targetAngle = spins * 2 * Math.PI + Math.random() * 2 * Math.PI;
+                
+                const startRotation = currentRotation;
+                const startTime = performance.now();
+                const duration = 4000; // 4 secondes
+                
+                function animate(currentTime) {
+                    const elapsed = currentTime - startTime;
+                    const progress = Math.min(elapsed / duration, 1);
+                    
+                    // Easing function (ease-out cubic)
+                    const easeOut = 1 - Math.pow(1 - progress, 3);
+                    
+                    currentRotation = startRotation + targetAngle * easeOut;
+                    drawWheel();
+                    
+                    if (progress < 1) {
+                        requestAnimationFrame(animate);
+                    } else {
+                        isSpinning = false;
+                        spinBtn.disabled = false;
+                        
+                        // Calculer le gagnant
+                        const segmentAngle = (2 * Math.PI) / students.length;
+                        // L'angle du pointeur est à -PI/2 (en haut)
+                        const normalizedRotation = ((-currentRotation - Math.PI / 2) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
+                        const winnerIndex = Math.floor(normalizedRotation / segmentAngle);
+                        
+                        winnerName.textContent = students[winnerIndex];
+                        result.classList.add('show');
+                        
+                        // Confettis !
+                        createConfetti();
+                    }
+                }
+                
+                requestAnimationFrame(animate);
+            }
+            
+            function createConfetti() {
+                const confettiColors = ['#e94560', '#f39c12', '#3498db', '#2ecc71', '#9b59b6'];
+                
+                for (let i = 0; i < 50; i++) {
+                    setTimeout(() => {
+                        const confetti = document.createElement('div');
+                        confetti.className = 'confetti';
+                        confetti.style.left = Math.random() * 100 + 'vw';
+                        confetti.style.backgroundColor = confettiColors[Math.floor(Math.random() * confettiColors.length)];
+                        confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+                        confetti.style.width = (Math.random() * 10 + 5) + 'px';
+                        confetti.style.height = (Math.random() * 10 + 5) + 'px';
+                        document.body.appendChild(confetti);
+                        
+                        setTimeout(() => confetti.remove(), 3000);
+                    }, i * 30);
+                }
+            }
+            
+            spinBtn.addEventListener('click', spin);
+            drawWheel();
+        }
+    </script>
+</body>
+</html>
