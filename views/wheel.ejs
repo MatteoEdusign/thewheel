@@ -16,7 +16,6 @@
             --edusign-blue-green: #1C414D;
             --edusign-green: #B1E1B9;
             --bg-color: #F9F9F9;
-            /* Fond très clair et pro */
             --text-color: #1C414D;
         }
 
@@ -36,12 +35,14 @@
             align-items: center;
             justify-content: center;
             padding: 20px;
+            overflow: hidden;
+            /* Empêche le scroll pendant l'animation */
         }
 
         h1 {
             font-weight: 700;
             font-size: 1.8rem;
-            margin-bottom: 10px;
+            margin-bottom: 5px;
             color: var(--edusign-blue-green);
             text-align: center;
         }
@@ -49,46 +50,51 @@
         p.subtitle {
             font-weight: 400;
             color: #666;
-            margin-bottom: 30px;
+            margin-bottom: 25px;
             font-size: 0.95rem;
+            text-align: center;
         }
 
         .wheel-wrapper {
             position: relative;
             /* Ombre douce et pro */
             filter: drop-shadow(0 10px 25px rgba(28, 65, 77, 0.15));
-            margin-bottom: 40px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
         canvas {
             border-radius: 50%;
             background: white;
-            /* Bordure fine aux couleurs de la marque */
+            /* Bordure fine blanche pour détacher du fond */
             border: 8px solid white;
         }
 
-        /* Le pointeur (Triangle) */
+        /* Le pointeur (Triangle inversé) */
         .pointer {
             position: absolute;
-            top: -15px;
+            top: -20px;
             left: 50%;
             transform: translateX(-50%);
             width: 0;
             height: 0;
-            border-left: 20px solid transparent;
-            border-right: 20px solid transparent;
-            border-top: 40px solid var(--edusign-blue-green);
+            border-left: 25px solid transparent;
+            border-right: 25px solid transparent;
+            border-top: 50px solid var(--edusign-blue-green);
             z-index: 10;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
         }
 
-        /* Le bouton central */
+        /* Le bouton central (étoile) */
         .center-circle {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 60px;
-            height: 60px;
+            width: 50px;
+            height: 50px;
             background: white;
             border-radius: 50%;
             display: flex;
@@ -96,11 +102,6 @@
             justify-content: center;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
             z-index: 5;
-        }
-
-        .center-circle img {
-            width: 30px;
-            height: auto;
         }
 
         /* Bouton d'action */
@@ -113,7 +114,6 @@
             padding: 14px 40px;
             border: none;
             border-radius: 8px;
-            /* Coins légèrement arrondis, style moderne */
             cursor: pointer;
             transition: all 0.2s ease;
             box-shadow: 0 4px 6px rgba(28, 65, 77, 0.2);
@@ -123,7 +123,6 @@
         #spinBtn:hover:not(:disabled) {
             transform: translateY(-2px);
             background-color: #14303A;
-            /* Version un peu plus sombre du Blue Green */
             box-shadow: 0 6px 12px rgba(28, 65, 77, 0.3);
         }
 
@@ -138,13 +137,15 @@
         /* Résultat */
         #result-container {
             margin-top: 20px;
-            height: 50px;
-            /* Espace réservé pour éviter le saut */
+            height: 40px;
             text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
         #result {
-            font-size: 1.5rem;
+            font-size: 1.4rem;
             font-weight: 700;
             color: var(--edusign-blue-green);
             opacity: 0;
@@ -177,14 +178,15 @@
 
         <div class="wheel-wrapper">
             <div class="pointer"></div>
-            <canvas id="wheel" width="400" height="400"></canvas>
-            <!-- Petit rond blanc au milieu pour le style -->
+            <canvas id="wheel" width="380" height="380"></canvas>
+
             <div class="center-circle">
-                <!-- SVG d'une étoile ou logo simple -->
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path
-                        d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"
-                        stroke="#1C414D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                <!-- Étoile SVG simple (style Edusign) -->
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1C414D" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <polygon
+                        points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2">
+                    </polygon>
                 </svg>
             </div>
         </div>
@@ -194,7 +196,6 @@
         <div id="result-container">
             <div id="result">
                 Gagnant : <span id="winnerName" style="color: #D35400;"></span>
-                <!-- Orange brique pour contraster ou garder bleu -->
             </div>
         </div>
     </div>
@@ -206,19 +207,15 @@
 
     <script>
         // Récupération sécurisée des données EJS
-        const students = <% - JSON.stringify(students) %>;
+        // On utilise JSON.stringify côté serveur pour être sûr du format
+        const students = <% - students %>;
 
-        // Palette officielle extraite du Brandbook
-        const brandColors = [
+        // Palette officielle
+        const colors = [
             '#FFD78B', // Edusign Yellow
             '#1C414D', // Blue Green
-            '#B1E1B9', // Green
-            '#FFFFFF'  // White (pour aérer)
+            '#B1E1B9'  // Green
         ];
-
-        // On enlève le blanc si on veut plus de couleur, ou on le garde pour le style épuré.
-        // Pour la roue, alternons les 3 couleurs principales pour un meilleur contraste.
-        const wheelColors = ['#FFD78B', '#1C414D', '#B1E1B9'];
 
         if (!students || students.length === 0) {
             document.getElementById('mainContent').style.display = 'none';
@@ -252,11 +249,11 @@
                     ctx.closePath();
 
                     // Choix de la couleur (boucle sur les 3 couleurs)
-                    const color = wheelColors[index % wheelColors.length];
+                    const color = colors[index % colors.length];
                     ctx.fillStyle = color;
                     ctx.fill();
 
-                    // Bordure blanche entre les segments pour la propreté
+                    // Bordure blanche entre les segments
                     ctx.strokeStyle = '#FFFFFF';
                     ctx.lineWidth = 4;
                     ctx.stroke();
@@ -267,43 +264,43 @@
                     ctx.rotate(startAngle + segmentAngle / 2);
                     ctx.textAlign = 'right';
 
-                    // Logique de couleur de texte : 
-                    // Si le fond est foncé (#1C414D), texte blanc. Sinon texte foncé.
+                    // Contraste intelligent
                     if (color === '#1C414D') {
-                        ctx.fillStyle = '#FFFFFF';
+                        ctx.fillStyle = '#FFFFFF'; // Blanc sur fond foncé
                     } else {
-                        ctx.fillStyle = '#1C414D';
+                        ctx.fillStyle = '#1C414D'; // Foncé sur fond clair
                     }
 
-                    ctx.font = '600 14px Inter'; // Police Inter Semi-Bold
+                    ctx.font = '600 14px Inter';
 
                     // Tronquer si trop long
                     let displayName = student;
-                    if (displayName.length > 18) displayName = displayName.substring(0, 15) + '...';
+                    if (displayName.length > 16) displayName = displayName.substring(0, 14) + '...';
 
-                    ctx.fillText(displayName, radius - 20, 5);
+                    ctx.fillText(displayName, radius - 25, 5);
                     ctx.restore();
                 });
             }
 
             function spin() {
                 if (isSpinning) return;
+
                 isSpinning = true;
                 spinBtn.disabled = true;
                 resultDiv.classList.remove('show');
 
                 // Paramètres de l'animation
-                const spins = 5 + Math.random() * 5;
+                const spins = 5 + Math.random() * 5; // Entre 5 et 10 tours
                 const targetAngle = spins * 2 * Math.PI + Math.random() * 2 * Math.PI;
                 const startRotation = currentRotation;
                 const startTime = performance.now();
-                const duration = 4500; // Un peu plus lent pour le suspense
+                const duration = 4500; // 4.5 secondes
 
                 function animate(currentTime) {
                     const elapsed = currentTime - startTime;
                     const progress = Math.min(elapsed / duration, 1);
 
-                    // Easing cubic out pour un arrêt en douceur
+                    // Easing cubic out
                     const easeOut = 1 - Math.pow(1 - progress, 3);
 
                     currentRotation = startRotation + targetAngle * easeOut;
@@ -326,7 +323,10 @@
                 const normalizedRotation = ((-currentRotation - Math.PI / 2) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
                 const winnerIndex = Math.floor(normalizedRotation / segmentAngle);
 
-                winnerSpan.textContent = students[winnerIndex];
+                // Sécurité index
+                const safeIndex = Math.max(0, Math.min(winnerIndex, students.length - 1));
+
+                winnerSpan.textContent = students[safeIndex];
                 resultDiv.classList.add('show');
 
                 // Confettis aux couleurs de la marque

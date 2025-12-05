@@ -72,13 +72,27 @@ app.get('/wheel-view', async (req, res) => {
 
         console.log('✅ [API Edusign] Response received');
 
-        // Structure attendue selon la doc fournie : result.STUDENTS (array)
-        const courseData = response.data.result;
+        // DEBUG : Voir la structure brute
+        console.log('🔍 [DEBUG] Full API Response Data:', JSON.stringify(response.data, null, 2));
+
+        // Structure attendue : result.STUDENTS ou peut-être directement STUDENTS ?
+        const courseData = response.data.result || response.data;
+
+        if (!courseData) {
+            throw new Error('Aucune donnée trouvée dans la réponse API');
+        }
+
+        // DEBUG LOGGING
+        console.log('🔍 [DEBUG] Course Data Keys:', Object.keys(courseData));
+
         const studentsList = courseData.STUDENTS || [];
 
-        // Problème potentiel : la doc dit que STUDENTS contient { studentId: "..." }
-        // Si on n'a pas les noms, on va devoir improviser ou faire un fallback.
-        // Pour l'instant, on essaie de mapper ce qu'on trouve.
+        if (studentsList.length > 0) {
+            console.log(`🔍 [DEBUG] Found ${studentsList.length} students.`);
+            console.log('🔍 [DEBUG] First student sample:', JSON.stringify(studentsList[0], null, 2));
+        } else {
+            console.warn('⚠️ [DEBUG] No STUDENTS array found in response!');
+        }
 
         let studentNames = [];
 
