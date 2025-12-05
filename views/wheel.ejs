@@ -215,13 +215,16 @@
         <p style="color: #666;">Impossible de récupérer la liste des participants pour ce cours.</p>
     </div>
 
+    <!-- Données des étudiants injectées en JSON sécurisé -->
+    <script id="students-data" type="application/json"><%- students %></script>
+
     <script>
         console.log("🚀 [Client Debug] Script started");
 
         try {
-            // Récupération sécurisée des données EJS
-            // On utilise JSON.stringify côté serveur pour être sûr du format
-            const students = <% - students %>;
+            // Récupération sécurisée des données via le script JSON
+            const studentsDataElement = document.getElementById('students-data');
+            const students = JSON.parse(studentsDataElement.textContent);
 
             console.log("✅ [Client Debug] Students data loaded:", students);
             console.log("📊 [Client Debug] Student count:", students ? students.length : 'N/A');
