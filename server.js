@@ -17,8 +17,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.post('/edusign-action', (req, res) => {
     console.log('🔔 [Edusign Action] Hit ! Body:', req.body);
 
-    // Récupération de l'ID, compatible POST body ou GET query
-    const courseId = req.body.course_id || req.query.course_id || req.body.data?.course_id;
+    // Récupération de l'ID, compatible POST body, GET query, ou context Edusign
+    const courseId = req.body.course_id || req.query.course_id || req.body.data?.course_id || req.body.context?.courseId;
 
     // Gestion propre de l'URL
     let myHost = process.env.APP_URL || "https://thewheel-henna.vercel.app";
