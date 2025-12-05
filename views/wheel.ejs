@@ -202,7 +202,7 @@
         <div id="result-container" style="margin-top: 15px; text-align: center; min-height: 30px;">
             <div id="result"
                 style="font-size: 1.1rem; font-weight: 600; color: var(--edusign-blue-green); opacity: 0; transition: opacity 0.5s ease;">
-                L'élève sélectionné : <span id="winnerName" style="color: #D35400; font-weight: 700;"></span>
+                L'élève sélectionné est : <span id="winnerName" style="color: #D35400; font-weight: 700;"></span>
             </div>
         </div>
     </div>
@@ -363,18 +363,6 @@
 
                     winnerSpan.textContent = winner;
                     resultDiv.style.opacity = '1';
-
-                    // Confettis aux couleurs de la marque
-                    try {
-                        confetti({
-                            particleCount: 150,
-                            spread: 70,
-                            origin: { y: 0.6 },
-                            colors: ['#FFD78B', '#1C414D', '#B1E1B9']
-                        });
-                    } catch (e) {
-                        console.error("❌ [Client Debug] Confetti error:", e);
-                    }
                 }
 
                 spinBtn.addEventListener('click', spin);
