@@ -2,22 +2,21 @@ const express = require('express');
 const axios = require('axios');
 const app = express();
 
-app.use(express.json()); // Important pour lire les données envoyées par Edusign
-app.set('view engine', 'ejs'); 
+app.use(express.json());
+app.set('view engine', 'ejs');
+app.use(express.static('public')); // Pour servir des fichiers statiques si besoin
 
 // ---------------------------------------------------------
 // PORTE 1 : L'entrée pour Edusign (Block Builder)
-// C'est cette URL que vous mettez dans "App Action" sur Edusign
 // ---------------------------------------------------------
 app.post('/edusign-action', (req, res) => {
-    // Edusign envoie souvent les données (comme course_id) dans le body
-    // Vérifiez si c'est req.body.courseId ou req.body.data.courseId selon leur doc
-    const courseId = req.body.course_id || req.query.course_id; 
-    
-    // L'URL de votre propre serveur (à remplacer par votre vraie URL hébergée)
-    const myHost = process.env.APP_URL || "https://thewheel.vercel.app"; 
+    // Récupération de l'ID, compatible POST body ou GET query
+    const courseId = req.body.course_id || req.query.course_id || req.body.data?.course_id;
 
-    // On renvoie le JSON conforme à votre doc Block Builder
+    // Gestion propre de l'URL (enlève le slash final s'il existe)
+    let myHost = process.env.APP_URL || "https://thewheel-henna.vercel.app";
+    if (myHost.endsWith('/')) myHost = myHost.slice(0, -1);
+
     const blocks = [
         {
             "block": "title",
@@ -25,13 +24,12 @@ app.post('/edusign-action', (req, res) => {
         },
         {
             "block": "text",
-            "text": "Lancez la roue pour désigner un étudiant aléatoirement !"
+            "text": "C'est l'heure d'interroger quelqu'un au hasard..."
         },
         {
-            // LE BLOC IFRAME QUI CONTIENT NOTRE ROUE
             "block": "iframe",
             "url": `${myHost}/wheel-view?course_id=${courseId}`,
-            "height": "500px"
+            "height": "520px" // Hauteur ajustée pour la roue
         }
     ];
 
@@ -39,40 +37,47 @@ app.post('/edusign-action', (req, res) => {
 });
 
 // ---------------------------------------------------------
-// PORTE 2 : La vue visuelle (HTML/Canvas)
-// C'est la page qui sera chargée DANS l'iframe ci-dessus
+// PORTE 2 : La vue visuelle (La Roue Stylée)
 // ---------------------------------------------------------
 app.get('/wheel-view', async (req, res) => {
     const courseId = req.query.course_id;
     const API_KEY = process.env.EDUSIGN_API_KEY;
 
-    if (!courseId) return res.send("Erreur : Pas d'ID de cours");
+    // Mode démo si on tape "TEST" ou s'il n'y a pas d'ID
+    if (!courseId || courseId === 'TEST') {
+        const demoStudents = ["Alice", "Bob", "Charlie", "David", "Emma", "Farah", "Gabriel", "Hugo"];
+        return res.render('wheel', { students: JSON.stringify(demoStudents) });
+    }
 
     try {
-        // Récupération des étudiants via l'API Edusign
         const response = await axios.get(`https://api.edusign.fr/v1/course/${courseId}/students`, {
             headers: { 'Authorization': `Bearer ${API_KEY}` }
         });
-        
-        const students = response.data.result || [];
-        const studentNames = students.map(s => `${s.firstname} ${s.lastname}`);
 
-        // On renvoie le fichier wheel.ejs (le code HTML de la roue)
+        const students = response.data.result || [];
+        // On prend prénom + initiale du nom pour que ça rentre bien dans la roue
+        const studentNames = students.map(s => `${s.firstname} ${s.lastname.charAt(0)}.`);
+
+        if (studentNames.length === 0) {
+            return res.render('wheel', { students: JSON.stringify(["Aucun élève"]) });
+        }
+
         res.render('wheel', { students: JSON.stringify(studentNames) });
 
     } catch (error) {
         console.error('Erreur API Edusign:', error.message);
-        res.send("Erreur API Edusign");
+        // En cas d'erreur, on affiche quand même la page mais avec un message
+        res.render('wheel', { students: JSON.stringify(["Erreur API"]) });
     }
 });
 
-// Route de test pour voir la roue avec des données mockées
+// Route de démo directe
 app.get('/demo', (req, res) => {
-    const demoStudents = ["Alice Martin", "Bob Dupont", "Charlie Durand", "Diana Lopez", "Emma Bernard", "Frank Petit"];
+    const demoStudents = ["Thomas", "Manon", "Alexandre", "Sophie", "Nicolas", "Julie"];
     res.render('wheel', { students: JSON.stringify(demoStudents) });
 });
 
-// Health check pour Vercel
+// Health check
 app.get('/', (req, res) => {
     res.json({ status: 'ok', message: '🎡 The Wheel is running!' });
 });
