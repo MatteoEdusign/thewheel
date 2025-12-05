@@ -63,39 +63,55 @@ app.get('/wheel-view', async (req, res) => {
     }
 
     try {
-        // RETOUR À L'ANCIEN ENDPOINT
-        // Maintenant qu'on a le bon courseId, on peut utiliser l'endpoint qui renvoie les NOMS.
-        const response = await axios.get(`https://api.edusign.fr/v1/course/${courseId}/students`, {
+        // ÉTAPE 1 : Récupérer la liste des IDs via le cours
+        console.log(`⏳ [Step 1] Fetching course details for ID: ${courseId}`);
+        const courseResponse = await axios.get(`https://ext.edusign.fr/v1/course/${courseId}`, {
             headers: { 'Authorization': `Bearer ${API_KEY}` }
         });
 
-        console.log('✅ [API Edusign] Response received from /students');
+        const courseData = courseResponse.data.result || courseResponse.data;
+        const studentsList = courseData.STUDENTS || [];
 
-        const result = response.data.result || [];
+        console.log(`✅ [Step 1] Found ${studentsList.length} student IDs.`);
 
-        // DEBUG LOGGING
-        console.log(`🔍 [DEBUG] Found ${result.length} students via /students endpoint.`);
-        if (result.length > 0) {
-            console.log('🔍 [DEBUG] First student sample:', JSON.stringify(result[0], null, 2));
+        if (studentsList.length === 0) {
+            return res.render('wheel', { students: JSON.stringify(["Aucun élève"]) });
         }
 
-        let studentNames = [];
+        // ÉTAPE 2 : Récupérer les détails de chaque étudiant (Nom/Prénom)
+        // On limite à 50 pour éviter de spammer l'API si le cours est énorme
+        const studentsToFetch = studentsList.slice(0, 50);
+        console.log(`⏳ [Step 2] Fetching details for ${studentsToFetch.length} students...`);
 
-        if (result.length > 0) {
-            // On espère avoir firstname et lastname ici
-            studentNames = result.map(s => {
-                if (s.firstname && s.lastname) {
-                    return `${s.firstname} ${s.lastname.charAt(0)}.`;
-                } else if (s.name) {
-                    return s.name;
-                } else {
-                    return "Étudiant (Sans nom)";
+        const studentPromises = studentsToFetch.map(async (s) => {
+            try {
+                // L'ID est dans s.studentId d'après les logs
+                const sId = s.studentId || s.id;
+                if (!sId) return "ID Inconnu";
+
+                const studentResponse = await axios.get(`https://ext.edusign.fr/v1/student/${sId}`, {
+                    headers: { 'Authorization': `Bearer ${API_KEY}` }
+                });
+
+                const sData = studentResponse.data.result;
+                if (sData && sData.FIRSTNAME) {
+                    return `${sData.FIRSTNAME} ${sData.LASTNAME ? sData.LASTNAME.charAt(0) + '.' : ''}`;
                 }
-            });
-        }
+                return "Étudiant (Sans nom)";
+            } catch (err) {
+                console.warn(`⚠️ [API Warning] Failed to fetch student ${s.studentId}:`, err.message);
+                return "Étudiant Inconnu";
+            }
+        });
+
+        // Attendre que toutes les requêtes soient finies
+        let studentNames = await Promise.all(studentPromises);
+
+        // Filtrer les éventuels échecs complets si nécessaire, ou garder les placeholders
+        console.log('✅ [Step 2] All student details fetched.');
 
         if (studentNames.length === 0) {
-            return res.render('wheel', { students: JSON.stringify(["Aucun élève"]) });
+            studentNames = ["Aucun élève trouvé"];
         }
 
         res.render('wheel', { students: JSON.stringify(studentNames) });
@@ -104,10 +120,7 @@ app.get('/wheel-view', async (req, res) => {
         console.error('❌ [API Error]', error.message);
         if (error.response) {
             console.error('Data:', error.response.data);
-            console.error('Status:', error.response.status);
         }
-
-        // Fallback gracieux pour ne pas montrer une page d'erreur moche
         res.render('wheel', { students: JSON.stringify(["Erreur API"]) });
     }
 });
