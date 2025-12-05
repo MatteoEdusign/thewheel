@@ -161,30 +161,7 @@
             box-shadow: none;
         }
 
-        /* Résultat */
-        #result-container {
-            margin-top: 20px;
-            height: 40px;
-            /* Espace réservé pour éviter le saut */
-            text-align: center;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
 
-        #result {
-            font-size: 1.4rem;
-            font-weight: 700;
-            color: var(--edusign-blue-green);
-            opacity: 0;
-            transform: translateY(10px);
-            transition: all 0.5s ease;
-        }
-
-        #result.show {
-            opacity: 1;
-            transform: translateY(0);
-        }
 
         /* État vide */
         .no-students {
@@ -222,10 +199,10 @@
 
         <button id="spinBtn">Lancer le tirage</button>
 
-        <div id="result-container">
-            <div id="result">
-                Gagnant : <span id="winnerName" style="color: #D35400;"></span>
-                <!-- Orange brique pour contraster ou garder bleu -->
+        <div id="result-container" style="margin-top: 15px; text-align: center; min-height: 30px;">
+            <div id="result"
+                style="font-size: 1.1rem; font-weight: 600; color: var(--edusign-blue-green); opacity: 0; transition: opacity 0.5s ease;">
+                L'élève sélectionné : <span id="winnerName" style="color: #D35400; font-weight: 700;"></span>
             </div>
         </div>
     </div>
@@ -385,7 +362,7 @@
                     winnerDisplay.textContent = winner;
 
                     winnerSpan.textContent = winner;
-                    resultDiv.classList.add('show');
+                    resultDiv.style.opacity = '1';
 
                     // Confettis aux couleurs de la marque
                     try {
