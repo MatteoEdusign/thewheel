@@ -16,6 +16,7 @@
             --edusign-blue-green: #1C414D;
             --edusign-green: #B1E1B9;
             --bg-color: #F9F9F9;
+            /* Fond très clair et pro */
             --text-color: #1C414D;
         }
 
@@ -68,11 +69,11 @@
         canvas {
             border-radius: 50%;
             background: white;
-            /* Bordure fine blanche pour détacher du fond */
+            /* Bordure fine aux couleurs de la marque */
             border: 8px solid white;
         }
 
-        /* Le pointeur (Triangle inversé) */
+        /* Le pointeur (Triangle) */
         .pointer {
             position: absolute;
             top: -20px;
@@ -87,7 +88,7 @@
             filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
         }
 
-        /* Le bouton central (étoile) */
+        /* Le bouton central */
         .center-circle {
             position: absolute;
             top: 50%;
@@ -104,6 +105,11 @@
             z-index: 5;
         }
 
+        .center-circle img {
+            width: 30px;
+            height: auto;
+        }
+
         /* Bouton d'action */
         #spinBtn {
             background-color: var(--edusign-blue-green);
@@ -114,6 +120,7 @@
             padding: 14px 40px;
             border: none;
             border-radius: 8px;
+            /* Coins légèrement arrondis, style moderne */
             cursor: pointer;
             transition: all 0.2s ease;
             box-shadow: 0 4px 6px rgba(28, 65, 77, 0.2);
@@ -123,6 +130,7 @@
         #spinBtn:hover:not(:disabled) {
             transform: translateY(-2px);
             background-color: #14303A;
+            /* Version un peu plus sombre du Blue Green */
             box-shadow: 0 6px 12px rgba(28, 65, 77, 0.3);
         }
 
@@ -138,6 +146,7 @@
         #result-container {
             margin-top: 20px;
             height: 40px;
+            /* Espace réservé pour éviter le saut */
             text-align: center;
             display: flex;
             justify-content: center;
@@ -179,9 +188,9 @@
         <div class="wheel-wrapper">
             <div class="pointer"></div>
             <canvas id="wheel" width="380" height="380"></canvas>
-
+            <!-- Petit rond blanc au milieu pour le style -->
             <div class="center-circle">
-                <!-- Étoile SVG simple (style Edusign) -->
+                <!-- SVG d'une étoile ou logo simple -->
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1C414D" stroke-width="2"
                     stroke-linecap="round" stroke-linejoin="round">
                     <polygon
@@ -196,6 +205,7 @@
         <div id="result-container">
             <div id="result">
                 Gagnant : <span id="winnerName" style="color: #D35400;"></span>
+                <!-- Orange brique pour contraster ou garder bleu -->
             </div>
         </div>
     </div>
@@ -233,7 +243,7 @@
             function drawWheel() {
                 const centerX = canvas.width / 2;
                 const centerY = canvas.height / 2;
-                const radius = Math.min(centerX, centerY) - 10; // Marge interne
+                const radius = Math.min(centerX, centerY) - 15; // Marge interne
                 const segmentAngle = (2 * Math.PI) / students.length;
 
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -253,7 +263,7 @@
                     ctx.fillStyle = color;
                     ctx.fill();
 
-                    // Bordure blanche entre les segments
+                    // Bordure blanche entre les segments pour la propreté
                     ctx.strokeStyle = '#FFFFFF';
                     ctx.lineWidth = 4;
                     ctx.stroke();
@@ -264,14 +274,15 @@
                     ctx.rotate(startAngle + segmentAngle / 2);
                     ctx.textAlign = 'right';
 
-                    // Contraste intelligent
+                    // Logique de couleur de texte : 
+                    // Si le fond est foncé (#1C414D), texte blanc. Sinon texte foncé.
                     if (color === '#1C414D') {
-                        ctx.fillStyle = '#FFFFFF'; // Blanc sur fond foncé
+                        ctx.fillStyle = '#FFFFFF';
                     } else {
-                        ctx.fillStyle = '#1C414D'; // Foncé sur fond clair
+                        ctx.fillStyle = '#1C414D';
                     }
 
-                    ctx.font = '600 14px Inter';
+                    ctx.font = '600 14px Inter'; // Police Inter Semi-Bold
 
                     // Tronquer si trop long
                     let displayName = student;
@@ -284,23 +295,22 @@
 
             function spin() {
                 if (isSpinning) return;
-
                 isSpinning = true;
                 spinBtn.disabled = true;
                 resultDiv.classList.remove('show');
 
                 // Paramètres de l'animation
-                const spins = 5 + Math.random() * 5; // Entre 5 et 10 tours
+                const spins = 5 + Math.random() * 5;
                 const targetAngle = spins * 2 * Math.PI + Math.random() * 2 * Math.PI;
                 const startRotation = currentRotation;
                 const startTime = performance.now();
-                const duration = 4500; // 4.5 secondes
+                const duration = 4500; // Un peu plus lent pour le suspense
 
                 function animate(currentTime) {
                     const elapsed = currentTime - startTime;
                     const progress = Math.min(elapsed / duration, 1);
 
-                    // Easing cubic out
+                    // Easing cubic out pour un arrêt en douceur
                     const easeOut = 1 - Math.pow(1 - progress, 3);
 
                     currentRotation = startRotation + targetAngle * easeOut;
