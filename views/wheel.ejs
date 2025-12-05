@@ -4,8 +4,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🎲 La Roue du Hasard</title>
+    <title>Sélecteur Aléatoire Edusign</title>
+    <!-- Import de la police officielle Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
     <style>
+        :root {
+            /* Palette officielle Edusign */
+            --edusign-yellow: #FFD78B;
+            --edusign-blue-green: #1C414D;
+            --edusign-green: #B1E1B9;
+            --bg-color: #F9F9F9;
+            /* Fond très clair et pro */
+            --text-color: #1C414D;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -13,45 +27,47 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             padding: 20px;
-            color: white;
         }
 
         h1 {
-            font-size: 2rem;
-            margin-bottom: 20px;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-            background: linear-gradient(90deg, #e94560, #f39c12, #3498db);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            font-weight: 700;
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+            color: var(--edusign-blue-green);
+            text-align: center;
         }
 
-        .wheel-container {
+        p.subtitle {
+            font-weight: 400;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 0.95rem;
+        }
+
+        .wheel-wrapper {
             position: relative;
-            width: 350px;
-            height: 350px;
-            margin: 20px 0;
+            /* Ombre douce et pro */
+            filter: drop-shadow(0 10px 25px rgba(28, 65, 77, 0.15));
+            margin-bottom: 40px;
         }
 
-        #wheel {
-            width: 100%;
-            height: 100%;
+        canvas {
             border-radius: 50%;
-            box-shadow:
-                0 0 30px rgba(233, 69, 96, 0.4),
-                0 0 60px rgba(233, 69, 96, 0.2),
-                inset 0 0 20px rgba(0, 0, 0, 0.3);
-            transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99);
+            background: white;
+            /* Bordure fine aux couleurs de la marque */
+            border: 8px solid white;
         }
 
+        /* Le pointeur (Triangle) */
         .pointer {
             position: absolute;
             top: -15px;
@@ -61,11 +77,11 @@
             height: 0;
             border-left: 20px solid transparent;
             border-right: 20px solid transparent;
-            border-top: 40px solid #e94560;
-            filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.4));
+            border-top: 40px solid var(--edusign-blue-green);
             z-index: 10;
         }
 
+        /* Le bouton central */
         .center-circle {
             position: absolute;
             top: 50%;
@@ -73,154 +89,146 @@
             transform: translate(-50%, -50%);
             width: 60px;
             height: 60px;
-            background: linear-gradient(145deg, #2d2d44, #1a1a2e);
+            background: white;
             border-radius: 50%;
-            box-shadow:
-                0 4px 15px rgba(0, 0, 0, 0.5),
-                inset 0 2px 5px rgba(255, 255, 255, 0.1);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5rem;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
             z-index: 5;
         }
 
+        .center-circle img {
+            width: 30px;
+            height: auto;
+        }
+
+        /* Bouton d'action */
         #spinBtn {
-            margin-top: 30px;
-            padding: 15px 50px;
-            font-size: 1.2rem;
-            font-weight: bold;
+            background-color: var(--edusign-blue-green);
             color: white;
-            background: linear-gradient(135deg, #e94560, #c73e54);
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 1rem;
+            padding: 14px 40px;
             border: none;
-            border-radius: 50px;
+            border-radius: 8px;
+            /* Coins légèrement arrondis, style moderne */
             cursor: pointer;
-            box-shadow:
-                0 6px 20px rgba(233, 69, 96, 0.4),
-                0 3px 10px rgba(0, 0, 0, 0.3);
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 2px;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 6px rgba(28, 65, 77, 0.2);
+            letter-spacing: 0.5px;
         }
 
         #spinBtn:hover:not(:disabled) {
-            transform: translateY(-3px);
-            box-shadow:
-                0 10px 30px rgba(233, 69, 96, 0.5),
-                0 5px 15px rgba(0, 0, 0, 0.4);
+            transform: translateY(-2px);
+            background-color: #14303A;
+            /* Version un peu plus sombre du Blue Green */
+            box-shadow: 0 6px 12px rgba(28, 65, 77, 0.3);
         }
 
         #spinBtn:disabled {
-            background: linear-gradient(135deg, #666, #444);
+            background-color: #E0E0E0;
+            color: #A0A0A0;
             cursor: not-allowed;
+            transform: none;
             box-shadow: none;
         }
 
+        /* Résultat */
+        #result-container {
+            margin-top: 20px;
+            height: 50px;
+            /* Espace réservé pour éviter le saut */
+            text-align: center;
+        }
+
         #result {
-            margin-top: 30px;
-            padding: 20px 40px;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
             font-size: 1.5rem;
-            font-weight: bold;
+            font-weight: 700;
+            color: var(--edusign-blue-green);
             opacity: 0;
-            transform: scale(0.8);
+            transform: translateY(10px);
             transition: all 0.5s ease;
         }
 
         #result.show {
             opacity: 1;
-            transform: scale(1);
+            transform: translateY(0);
         }
 
-        .winner-name {
-            background: linear-gradient(90deg, #f39c12, #e94560);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .confetti {
-            position: fixed;
-            width: 10px;
-            height: 10px;
-            pointer-events: none;
-            animation: confetti-fall 3s ease-out forwards;
-        }
-
-        @keyframes confetti-fall {
-            0% {
-                transform: translateY(-100vh) rotate(0deg);
-                opacity: 1;
-            }
-
-            100% {
-                transform: translateY(100vh) rotate(720deg);
-                opacity: 0;
-            }
-        }
-
+        /* État vide */
         .no-students {
             text-align: center;
             padding: 40px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
             max-width: 400px;
-        }
-
-        .no-students p {
-            margin: 10px 0;
-            opacity: 0.8;
         }
     </style>
 </head>
 
 <body>
-    <h1>🎲 La Roue du Hasard</h1>
 
-    <div id="wheelSection">
-        <div class="wheel-container">
+    <div id="mainContent">
+        <h1>Qui participe ?</h1>
+        <p class="subtitle">Tirage au sort parmi les présents</p>
+
+        <div class="wheel-wrapper">
             <div class="pointer"></div>
-            <canvas id="wheel" width="350" height="350"></canvas>
-            <div class="center-circle">🎯</div>
+            <canvas id="wheel" width="400" height="400"></canvas>
+            <!-- Petit rond blanc au milieu pour le style -->
+            <div class="center-circle">
+                <!-- SVG d'une étoile ou logo simple -->
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path
+                        d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"
+                        stroke="#1C414D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+            </div>
         </div>
 
-        <button id="spinBtn">🎰 Lancer la roue !</button>
+        <button id="spinBtn">Lancer le tirage</button>
 
-        <div id="result">
-            <span>🎉 Le gagnant est : </span>
-            <span id="winnerName" class="winner-name"></span>
+        <div id="result-container">
+            <div id="result">
+                Gagnant : <span id="winnerName" style="color: #D35400;"></span>
+                <!-- Orange brique pour contraster ou garder bleu -->
+            </div>
         </div>
     </div>
 
     <div id="noStudents" class="no-students" style="display: none;">
-        <h2>😕 Aucun étudiant trouvé</h2>
-        <p>Il n'y a pas d'étudiants dans ce cours.</p>
-        <p>Vérifiez que des étudiants sont bien inscrits.</p>
+        <h2 style="margin-bottom: 10px; color: var(--edusign-blue-green);">Aucun étudiant trouvé</h2>
+        <p style="color: #666;">Impossible de récupérer la liste des participants pour ce cours.</p>
     </div>
 
     <script>
-        // Les données sont déjà JSON.stringify() côté serveur
-        const students = <% - students %>;
+        // Récupération sécurisée des données EJS
+        const students = <% - JSON.stringify(students) %>;
 
-        if (students.length === 0) {
-            document.getElementById('wheelSection').style.display = 'none';
+        // Palette officielle extraite du Brandbook
+        const brandColors = [
+            '#FFD78B', // Edusign Yellow
+            '#1C414D', // Blue Green
+            '#B1E1B9', // Green
+            '#FFFFFF'  // White (pour aérer)
+        ];
+
+        // On enlève le blanc si on veut plus de couleur, ou on le garde pour le style épuré.
+        // Pour la roue, alternons les 3 couleurs principales pour un meilleur contraste.
+        const wheelColors = ['#FFD78B', '#1C414D', '#B1E1B9'];
+
+        if (!students || students.length === 0) {
+            document.getElementById('mainContent').style.display = 'none';
             document.getElementById('noStudents').style.display = 'block';
         } else {
             const canvas = document.getElementById('wheel');
             const ctx = canvas.getContext('2d');
             const spinBtn = document.getElementById('spinBtn');
-            const result = document.getElementById('result');
-            const winnerName = document.getElementById('winnerName');
-
-            // Couleurs vibrantes pour les segments
-            const colors = [
-                '#e94560', '#f39c12', '#3498db', '#2ecc71',
-                '#9b59b6', '#1abc9c', '#e74c3c', '#34495e',
-                '#16a085', '#d35400', '#8e44ad', '#27ae60'
-            ];
+            const resultDiv = document.getElementById('result');
+            const winnerSpan = document.getElementById('winnerName');
 
             let currentRotation = 0;
             let isSpinning = false;
@@ -228,7 +236,7 @@
             function drawWheel() {
                 const centerX = canvas.width / 2;
                 const centerY = canvas.height / 2;
-                const radius = Math.min(centerX, centerY) - 5;
+                const radius = Math.min(centerX, centerY) - 10; // Marge interne
                 const segmentAngle = (2 * Math.PI) / students.length;
 
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -237,57 +245,65 @@
                     const startAngle = index * segmentAngle + currentRotation;
                     const endAngle = startAngle + segmentAngle;
 
-                    // Dessiner le segment
+                    // 1. Dessin du segment
                     ctx.beginPath();
                     ctx.moveTo(centerX, centerY);
                     ctx.arc(centerX, centerY, radius, startAngle, endAngle);
                     ctx.closePath();
-                    ctx.fillStyle = colors[index % colors.length];
+
+                    // Choix de la couleur (boucle sur les 3 couleurs)
+                    const color = wheelColors[index % wheelColors.length];
+                    ctx.fillStyle = color;
                     ctx.fill();
-                    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
-                    ctx.lineWidth = 2;
+
+                    // Bordure blanche entre les segments pour la propreté
+                    ctx.strokeStyle = '#FFFFFF';
+                    ctx.lineWidth = 4;
                     ctx.stroke();
 
-                    // Dessiner le texte
+                    // 2. Texte
                     ctx.save();
                     ctx.translate(centerX, centerY);
                     ctx.rotate(startAngle + segmentAngle / 2);
                     ctx.textAlign = 'right';
-                    ctx.fillStyle = 'white';
-                    ctx.font = 'bold 12px Segoe UI';
-                    ctx.shadowColor = 'rgba(0,0,0,0.5)';
-                    ctx.shadowBlur = 3;
 
-                    // Tronquer le nom si trop long
-                    let displayName = student;
-                    if (displayName.length > 15) {
-                        displayName = displayName.substring(0, 12) + '...';
+                    // Logique de couleur de texte : 
+                    // Si le fond est foncé (#1C414D), texte blanc. Sinon texte foncé.
+                    if (color === '#1C414D') {
+                        ctx.fillStyle = '#FFFFFF';
+                    } else {
+                        ctx.fillStyle = '#1C414D';
                     }
-                    ctx.fillText(displayName, radius - 15, 4);
+
+                    ctx.font = '600 14px Inter'; // Police Inter Semi-Bold
+
+                    // Tronquer si trop long
+                    let displayName = student;
+                    if (displayName.length > 18) displayName = displayName.substring(0, 15) + '...';
+
+                    ctx.fillText(displayName, radius - 20, 5);
                     ctx.restore();
                 });
             }
 
             function spin() {
                 if (isSpinning) return;
-
                 isSpinning = true;
                 spinBtn.disabled = true;
-                result.classList.remove('show');
+                resultDiv.classList.remove('show');
 
-                // Nombre aléatoire de tours (5-10) + position aléatoire
+                // Paramètres de l'animation
                 const spins = 5 + Math.random() * 5;
                 const targetAngle = spins * 2 * Math.PI + Math.random() * 2 * Math.PI;
-
                 const startRotation = currentRotation;
                 const startTime = performance.now();
-                const duration = 4000; // 4 secondes
+                const duration = 4500; // Un peu plus lent pour le suspense
 
                 function animate(currentTime) {
                     const elapsed = currentTime - startTime;
                     const progress = Math.min(elapsed / duration, 1);
 
-                    // Easing function (ease-out cubic)
+                    // Easing cubic out pour un arrêt en douceur
                     const easeOut = 1 - Math.pow(1 - progress, 3);
 
                     currentRotation = startRotation + targetAngle * easeOut;
@@ -298,44 +314,33 @@
                     } else {
                         isSpinning = false;
                         spinBtn.disabled = false;
-
-                        // Calculer le gagnant
-                        const segmentAngle = (2 * Math.PI) / students.length;
-                        // L'angle du pointeur est à -PI/2 (en haut)
-                        const normalizedRotation = ((-currentRotation - Math.PI / 2) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
-                        const winnerIndex = Math.floor(normalizedRotation / segmentAngle);
-
-                        winnerName.textContent = students[winnerIndex];
-                        result.classList.add('show');
-
-                        // Confettis !
-                        createConfetti();
+                        displayWinner();
                     }
                 }
-
                 requestAnimationFrame(animate);
             }
 
-            function createConfetti() {
-                const confettiColors = ['#e94560', '#f39c12', '#3498db', '#2ecc71', '#9b59b6'];
+            function displayWinner() {
+                const segmentAngle = (2 * Math.PI) / students.length;
+                // Ajustement mathématique car le pointeur est en haut (-PI/2)
+                const normalizedRotation = ((-currentRotation - Math.PI / 2) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
+                const winnerIndex = Math.floor(normalizedRotation / segmentAngle);
 
-                for (let i = 0; i < 50; i++) {
-                    setTimeout(() => {
-                        const confetti = document.createElement('div');
-                        confetti.className = 'confetti';
-                        confetti.style.left = Math.random() * 100 + 'vw';
-                        confetti.style.backgroundColor = confettiColors[Math.floor(Math.random() * confettiColors.length)];
-                        confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
-                        confetti.style.width = (Math.random() * 10 + 5) + 'px';
-                        confetti.style.height = (Math.random() * 10 + 5) + 'px';
-                        document.body.appendChild(confetti);
+                winnerSpan.textContent = students[winnerIndex];
+                resultDiv.classList.add('show');
 
-                        setTimeout(() => confetti.remove(), 3000);
-                    }, i * 30);
-                }
+                // Confettis aux couleurs de la marque
+                confetti({
+                    particleCount: 150,
+                    spread: 70,
+                    origin: { y: 0.6 },
+                    colors: ['#FFD78B', '#1C414D', '#B1E1B9']
+                });
             }
 
             spinBtn.addEventListener('click', spin);
+
+            // Premier dessin
             drawWheel();
         }
     </script>
