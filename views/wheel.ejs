@@ -216,142 +216,164 @@
     </div>
 
     <script>
-        // Récupération sécurisée des données EJS
-        // On utilise JSON.stringify côté serveur pour être sûr du format
-        const students = <% - students %>;
+        console.log("🚀 [Client Debug] Script started");
 
-        // Palette officielle
-        const colors = [
-            '#FFD78B', // Edusign Yellow
-            '#1C414D', // Blue Green
-            '#B1E1B9'  // Green
-        ];
+        try {
+            // Récupération sécurisée des données EJS
+            // On utilise JSON.stringify côté serveur pour être sûr du format
+            const students = <% - students %>;
 
-        if (!students || students.length === 0) {
-            document.getElementById('mainContent').style.display = 'none';
-            document.getElementById('noStudents').style.display = 'block';
-        } else {
-            const canvas = document.getElementById('wheel');
-            const ctx = canvas.getContext('2d');
-            const spinBtn = document.getElementById('spinBtn');
-            const resultDiv = document.getElementById('result');
-            const winnerSpan = document.getElementById('winnerName');
+            console.log("✅ [Client Debug] Students data loaded:", students);
+            console.log("📊 [Client Debug] Student count:", students ? students.length : 'N/A');
 
-            let currentRotation = 0;
-            let isSpinning = false;
+            // Palette officielle
+            const colors = [
+                '#FFD78B', // Edusign Yellow
+                '#1C414D', // Blue Green
+                '#B1E1B9'  // Green
+            ];
 
-            function drawWheel() {
-                const centerX = canvas.width / 2;
-                const centerY = canvas.height / 2;
-                const radius = Math.min(centerX, centerY) - 15; // Marge interne
-                const segmentAngle = (2 * Math.PI) / students.length;
+            if (!students || students.length === 0) {
+                console.warn("⚠️ [Client Debug] No students found or empty array");
+                document.getElementById('mainContent').style.display = 'none';
+                document.getElementById('noStudents').style.display = 'block';
+            } else {
+                console.log("🎨 [Client Debug] Initializing Canvas...");
+                const canvas = document.getElementById('wheel');
+                if (!canvas) console.error("❌ [Client Debug] Canvas element not found!");
 
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                const ctx = canvas.getContext('2d');
+                const spinBtn = document.getElementById('spinBtn');
+                const resultDiv = document.getElementById('result');
+                const winnerSpan = document.getElementById('winnerName');
 
-                students.forEach((student, index) => {
-                    const startAngle = index * segmentAngle + currentRotation;
-                    const endAngle = startAngle + segmentAngle;
+                let currentRotation = 0;
+                let isSpinning = false;
 
-                    // 1. Dessin du segment
-                    ctx.beginPath();
-                    ctx.moveTo(centerX, centerY);
-                    ctx.arc(centerX, centerY, radius, startAngle, endAngle);
-                    ctx.closePath();
+                function drawWheel() {
+                    console.log("🖌️ [Client Debug] Drawing wheel...");
+                    const centerX = canvas.width / 2;
+                    const centerY = canvas.height / 2;
+                    const radius = Math.min(centerX, centerY) - 15; // Marge interne
+                    const segmentAngle = (2 * Math.PI) / students.length;
 
-                    // Choix de la couleur (boucle sur les 3 couleurs)
-                    const color = colors[index % colors.length];
-                    ctx.fillStyle = color;
-                    ctx.fill();
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-                    // Bordure blanche entre les segments pour la propreté
-                    ctx.strokeStyle = '#FFFFFF';
-                    ctx.lineWidth = 4;
-                    ctx.stroke();
+                    students.forEach((student, index) => {
+                        const startAngle = index * segmentAngle + currentRotation;
+                        const endAngle = startAngle + segmentAngle;
 
-                    // 2. Texte
-                    ctx.save();
-                    ctx.translate(centerX, centerY);
-                    ctx.rotate(startAngle + segmentAngle / 2);
-                    ctx.textAlign = 'right';
+                        // 1. Dessin du segment
+                        ctx.beginPath();
+                        ctx.moveTo(centerX, centerY);
+                        ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+                        ctx.closePath();
 
-                    // Logique de couleur de texte : 
-                    // Si le fond est foncé (#1C414D), texte blanc. Sinon texte foncé.
-                    if (color === '#1C414D') {
-                        ctx.fillStyle = '#FFFFFF';
-                    } else {
-                        ctx.fillStyle = '#1C414D';
+                        // Choix de la couleur (boucle sur les 3 couleurs)
+                        const color = colors[index % colors.length];
+                        ctx.fillStyle = color;
+                        ctx.fill();
+
+                        // Bordure blanche entre les segments pour la propreté
+                        ctx.strokeStyle = '#FFFFFF';
+                        ctx.lineWidth = 4;
+                        ctx.stroke();
+
+                        // 2. Texte
+                        ctx.save();
+                        ctx.translate(centerX, centerY);
+                        ctx.rotate(startAngle + segmentAngle / 2);
+                        ctx.textAlign = 'right';
+
+                        // Logique de couleur de texte : 
+                        // Si le fond est foncé (#1C414D), texte blanc. Sinon texte foncé.
+                        if (color === '#1C414D') {
+                            ctx.fillStyle = '#FFFFFF';
+                        } else {
+                            ctx.fillStyle = '#1C414D';
+                        }
+
+                        ctx.font = '600 14px Inter'; // Police Inter Semi-Bold
+
+                        // Tronquer si trop long
+                        let displayName = student;
+                        if (displayName.length > 16) displayName = displayName.substring(0, 14) + '...';
+
+                        ctx.fillText(displayName, radius - 25, 5);
+                        ctx.restore();
+                    });
+                    console.log("✅ [Client Debug] Wheel drawn successfully");
+                }
+
+                function spin() {
+                    if (isSpinning) return;
+                    console.log("🎰 [Client Debug] Spin started");
+                    isSpinning = true;
+                    spinBtn.disabled = true;
+                    resultDiv.classList.remove('show');
+
+                    // Paramètres de l'animation
+                    const spins = 5 + Math.random() * 5;
+                    const targetAngle = spins * 2 * Math.PI + Math.random() * 2 * Math.PI;
+                    const startRotation = currentRotation;
+                    const startTime = performance.now();
+                    const duration = 4500; // Un peu plus lent pour le suspense
+
+                    function animate(currentTime) {
+                        const elapsed = currentTime - startTime;
+                        const progress = Math.min(elapsed / duration, 1);
+
+                        // Easing cubic out pour un arrêt en douceur
+                        const easeOut = 1 - Math.pow(1 - progress, 3);
+
+                        currentRotation = startRotation + targetAngle * easeOut;
+                        drawWheel();
+
+                        if (progress < 1) {
+                            requestAnimationFrame(animate);
+                        } else {
+                            isSpinning = false;
+                            spinBtn.disabled = false;
+                            displayWinner();
+                        }
                     }
+                    requestAnimationFrame(animate);
+                }
 
-                    ctx.font = '600 14px Inter'; // Police Inter Semi-Bold
+                function displayWinner() {
+                    console.log("🏆 [Client Debug] Displaying winner");
+                    const segmentAngle = (2 * Math.PI) / students.length;
+                    // Ajustement mathématique car le pointeur est en haut (-PI/2)
+                    const normalizedRotation = ((-currentRotation - Math.PI / 2) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
+                    const winnerIndex = Math.floor(normalizedRotation / segmentAngle);
 
-                    // Tronquer si trop long
-                    let displayName = student;
-                    if (displayName.length > 16) displayName = displayName.substring(0, 14) + '...';
+                    // Sécurité index
+                    const safeIndex = Math.max(0, Math.min(winnerIndex, students.length - 1));
 
-                    ctx.fillText(displayName, radius - 25, 5);
-                    ctx.restore();
-                });
-            }
+                    winnerSpan.textContent = students[safeIndex];
+                    resultDiv.classList.add('show');
 
-            function spin() {
-                if (isSpinning) return;
-                isSpinning = true;
-                spinBtn.disabled = true;
-                resultDiv.classList.remove('show');
-
-                // Paramètres de l'animation
-                const spins = 5 + Math.random() * 5;
-                const targetAngle = spins * 2 * Math.PI + Math.random() * 2 * Math.PI;
-                const startRotation = currentRotation;
-                const startTime = performance.now();
-                const duration = 4500; // Un peu plus lent pour le suspense
-
-                function animate(currentTime) {
-                    const elapsed = currentTime - startTime;
-                    const progress = Math.min(elapsed / duration, 1);
-
-                    // Easing cubic out pour un arrêt en douceur
-                    const easeOut = 1 - Math.pow(1 - progress, 3);
-
-                    currentRotation = startRotation + targetAngle * easeOut;
-                    drawWheel();
-
-                    if (progress < 1) {
-                        requestAnimationFrame(animate);
-                    } else {
-                        isSpinning = false;
-                        spinBtn.disabled = false;
-                        displayWinner();
+                    // Confettis aux couleurs de la marque
+                    try {
+                        confetti({
+                            particleCount: 150,
+                            spread: 70,
+                            origin: { y: 0.6 },
+                            colors: ['#FFD78B', '#1C414D', '#B1E1B9']
+                        });
+                    } catch (e) {
+                        console.error("❌ [Client Debug] Confetti error:", e);
                     }
                 }
-                requestAnimationFrame(animate);
+
+                spinBtn.addEventListener('click', spin);
+
+                // Premier dessin
+                drawWheel();
             }
-
-            function displayWinner() {
-                const segmentAngle = (2 * Math.PI) / students.length;
-                // Ajustement mathématique car le pointeur est en haut (-PI/2)
-                const normalizedRotation = ((-currentRotation - Math.PI / 2) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
-                const winnerIndex = Math.floor(normalizedRotation / segmentAngle);
-
-                // Sécurité index
-                const safeIndex = Math.max(0, Math.min(winnerIndex, students.length - 1));
-
-                winnerSpan.textContent = students[safeIndex];
-                resultDiv.classList.add('show');
-
-                // Confettis aux couleurs de la marque
-                confetti({
-                    particleCount: 150,
-                    spread: 70,
-                    origin: { y: 0.6 },
-                    colors: ['#FFD78B', '#1C414D', '#B1E1B9']
-                });
-            }
-
-            spinBtn.addEventListener('click', spin);
-
-            // Premier dessin
-            drawWheel();
+        } catch (globalError) {
+            console.error("❌ [Client Debug] CRITICAL ERROR:", globalError);
+            alert("Erreur critique JS: " + globalError.message);
         }
     </script>
 </body>
