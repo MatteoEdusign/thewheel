@@ -24,18 +24,10 @@ app.post('/edusign-action', (req, res) => {
     let myHost = process.env.APP_URL || "https://thewheel-henna.vercel.app";
     if (myHost.endsWith('/')) myHost = myHost.slice(0, -1);
 
-    // Réponse conforme à la doc Block Builder avec des IDs uniques
+    // Réponse conforme à la doc Block Builder
+    // On ne renvoie QUE l'iframe pour que tout le contenu (titres inclus) soit géré
+    // à l'intérieur de l'app et donc traduisible dynamiquement.
     const blocks = [
-        {
-            "id": "title_blk",
-            "block": "title",
-            "text": "🎲 La Roue du Hasard"
-        },
-        {
-            "id": "text_blk",
-            "block": "text",
-            "text": "C'est l'heure d'interroger quelqu'un au hasard..."
-        },
         {
             "id": "iframe_blk",
             "block": "iframe",
