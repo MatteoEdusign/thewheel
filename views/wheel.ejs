@@ -133,6 +133,58 @@
             line-height: 1.2;
             overflow: hidden;
             word-break: break-word;
+            animation: tadaWinner 0.6s ease-out;
+        }
+
+        @keyframes tadaWinner {
+            0% {
+                transform: translate(-50%, -50%) scale(0.5);
+                opacity: 0;
+            }
+
+            50% {
+                transform: translate(-50%, -50%) scale(1.15);
+            }
+
+            70% {
+                transform: translate(-50%, -50%) scale(0.95);
+            }
+
+            100% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+            }
+        }
+
+        /* Message suspense */
+        #suspenseMessage {
+            position: absolute;
+            bottom: -45px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--edusign-blue-green);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            white-space: nowrap;
+        }
+
+        #suspenseMessage.show {
+            opacity: 1;
+            animation: suspensePulse 0.8s ease-in-out infinite;
+        }
+
+        @keyframes suspensePulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
         }
 
         .center-circle img {
@@ -207,6 +259,8 @@
                 </svg>
                 <span id="winnerDisplay" style="display: none;"></span>
             </div>
+
+            <div id="suspenseMessage">🥁 Suspense...</div>
         </div>
 
         <button id="spinBtn">Lancer le tirage</button>
@@ -214,9 +268,11 @@
         <div id="result-container" style="margin-top: 15px; text-align: center; min-height: 30px;">
             <div id="result"
                 style="font-size: 1.1rem; font-weight: 600; color: var(--edusign-blue-green); opacity: 0; transition: opacity 0.5s ease;">
-                L'élève sélectionné est : <span id="winnerName" style="font-weight: 700;"></span> !
+                🎉 L'élève sélectionné est : <span id="winnerName" style="font-weight: 700;"></span> ! 🎉
             </div>
         </div>
+    </div>
+    </div>
     </div>
 
     <div id="noStudents" class="no-students" style="display: none;">
@@ -261,6 +317,27 @@
 
                 let currentRotation = 0;
                 let isSpinning = false;
+                let lastTickAngle = 0;
+
+                // Audio Context pour le son de tick
+                let audioCtx = null;
+                function playTick() {
+                    try {
+                        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                        const oscillator = audioCtx.createOscillator();
+                        const gainNode = audioCtx.createGain();
+                        oscillator.connect(gainNode);
+                        gainNode.connect(audioCtx.destination);
+                        oscillator.frequency.value = 800 + Math.random() * 400;
+                        oscillator.type = 'sine';
+                        gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
+                        oscillator.start(audioCtx.currentTime);
+                        oscillator.stop(audioCtx.currentTime + 0.05);
+                    } catch (e) { /* Son non supporté */ }
+                }
+
+                const suspenseMessage = document.getElementById('suspenseMessage');
 
                 function drawWheel() {
                     console.log("🖌️ [Client Debug] Drawing wheel...");
@@ -322,7 +399,8 @@
                     console.log("🎰 [Client Debug] Spin started");
                     isSpinning = true;
                     spinBtn.disabled = true;
-                    resultDiv.classList.remove('show');
+                    resultDiv.style.opacity = '0';
+                    suspenseMessage.classList.add('show');
 
                     // Paramètres de l'animation
                     const spins = 5 + Math.random() * 5;
@@ -341,11 +419,20 @@
                         currentRotation = startRotation + targetAngle * easeOut;
                         drawWheel();
 
+                        // Jouer un tick à chaque segment
+                        const segmentAngle = (2 * Math.PI) / students.length;
+                        const currentSegment = Math.floor(currentRotation / segmentAngle);
+                        if (currentSegment !== lastTickAngle) {
+                            playTick();
+                            lastTickAngle = currentSegment;
+                        }
+
                         if (progress < 1) {
                             requestAnimationFrame(animate);
                         } else {
                             isSpinning = false;
                             spinBtn.disabled = false;
+                            suspenseMessage.classList.remove('show');
                             displayWinner();
                         }
                     }
@@ -379,6 +466,35 @@
 
                     winnerSpan.textContent = winner;
                     resultDiv.style.opacity = '1';
+
+                    // Confettis de victoire !
+                    setTimeout(() => {
+                        try {
+                            confetti({
+                                particleCount: 100,
+                                spread: 70,
+                                origin: { y: 0.6 },
+                                colors: ['#FFD78B', '#1C414D', '#B1E1B9']
+                            });
+                            // Deuxième salve
+                            setTimeout(() => {
+                                confetti({
+                                    particleCount: 50,
+                                    angle: 60,
+                                    spread: 55,
+                                    origin: { x: 0 },
+                                    colors: ['#FFD78B', '#B1E1B9']
+                                });
+                                confetti({
+                                    particleCount: 50,
+                                    angle: 120,
+                                    spread: 55,
+                                    origin: { x: 1 },
+                                    colors: ['#FFD78B', '#B1E1B9']
+                                });
+                            }, 200);
+                        } catch (e) { console.log('Confetti non disponible'); }
+                    }, 100);
                 }
 
                 spinBtn.addEventListener('click', spin);
