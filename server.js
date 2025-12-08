@@ -1,6 +1,7 @@
 const express = require('express');
 const axios = require('axios');
 const path = require('path');
+const { kv } = require('@vercel/kv');
 const app = express();
 
 // Middleware pour parser le JSON et les données URL-encoded (form-data)
@@ -12,26 +13,41 @@ app.set('views', path.join(__dirname, 'views'));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ---------------------------------------------------------
+// Helper : Récupérer le token API pour une école donnée
+// ---------------------------------------------------------
+async function getApiKeyForSchool(schoolId) {
+    if (!schoolId) return process.env.EDUSIGN_API_KEY; // Fallback pour démo/test
+    try {
+        const token = await kv.get(`school:${schoolId}:token`);
+        return token || process.env.EDUSIGN_API_KEY; // Fallback si pas trouvé
+    } catch (error) {
+        console.error('❌ [KV Error] Failed to get token:', error.message);
+        return process.env.EDUSIGN_API_KEY; // Fallback en cas d'erreur
+    }
+}
+
+// ---------------------------------------------------------
 // PORTE 1 : L'entrée pour Edusign (Block Builder)
 // ---------------------------------------------------------
 app.post('/edusign-action', (req, res) => {
     console.log('🔔 [Edusign Action] Hit ! Body:', req.body);
 
-    // Récupération de l'ID, compatible POST body, GET query, ou context Edusign
+    // Récupération des IDs depuis le contexte Edusign
     const courseId = req.body.course_id || req.query.course_id || req.body.data?.course_id || req.body.context?.courseId;
+    const schoolId = req.body.school_id || req.body.schoolId || req.body.context?.schoolId;
+
+    console.log(`📍 [Edusign Action] courseId: ${courseId}, schoolId: ${schoolId}`);
 
     // Gestion propre de l'URL
     let myHost = process.env.APP_URL || "https://thewheel-henna.vercel.app";
     if (myHost.endsWith('/')) myHost = myHost.slice(0, -1);
 
-    // Réponse conforme à la doc Block Builder
-    // On ne renvoie QUE l'iframe pour que tout le contenu (titres inclus) soit géré
-    // à l'intérieur de l'app et donc traduisible dynamiquement.
+    // On passe le schoolId dans l'URL pour pouvoir récupérer le bon token
     const blocks = [
         {
             "id": "iframe_blk",
             "block": "iframe",
-            "url": `${myHost}/wheel-view?course_id=${courseId}`,
+            "url": `${myHost}/wheel-view?course_id=${courseId}&school_id=${schoolId}`,
             "height": "650px"
         }
     ];
@@ -44,15 +60,18 @@ app.post('/edusign-action', (req, res) => {
 // ---------------------------------------------------------
 app.get('/wheel-view', async (req, res) => {
     const courseId = req.query.course_id;
-    const API_KEY = process.env.EDUSIGN_API_KEY;
+    const schoolId = req.query.school_id;
 
-    console.log(`👀 [Wheel View] Loading for course: ${courseId}`);
+    console.log(`👀 [Wheel View] Loading for course: ${courseId}, school: ${schoolId}`);
 
     // Mode démo
-    if (!courseId || courseId === 'TEST') {
+    if (!courseId || courseId === 'TEST' || courseId === 'undefined') {
         const demoStudents = ["Alice", "Bob", "Charlie", "David", "Emma", "Farah", "Gabriel", "Hugo"];
         return res.render('wheel', { students: JSON.stringify(demoStudents) });
     }
+
+    // Récupérer le token API pour cette école
+    const API_KEY = await getApiKeyForSchool(schoolId);
 
     try {
         // ÉTAPE 1 : Récupérer la liste des IDs via le cours
@@ -71,13 +90,11 @@ app.get('/wheel-view', async (req, res) => {
         }
 
         // ÉTAPE 2 : Récupérer les détails de chaque étudiant (Nom/Prénom)
-        // On limite à 50 pour éviter de spammer l'API si le cours est énorme
         const studentsToFetch = studentsList.slice(0, 50);
         console.log(`⏳ [Step 2] Fetching details for ${studentsToFetch.length} students...`);
 
         const studentPromises = studentsToFetch.map(async (s) => {
             try {
-                // L'ID est dans s.studentId d'après les logs
                 const sId = s.studentId || s.id;
                 if (!sId) return "ID Inconnu";
 
@@ -96,10 +113,8 @@ app.get('/wheel-view', async (req, res) => {
             }
         });
 
-        // Attendre que toutes les requêtes soient finies
         let studentNames = await Promise.all(studentPromises);
 
-        // Filtrer les éventuels échecs complets si nécessaire, ou garder les placeholders
         console.log('✅ [Step 2] All student details fetched.');
         console.log('🔍 [DEBUG] Final Student Names List:', JSON.stringify(studentNames, null, 2));
 
@@ -127,17 +142,42 @@ app.get('/demo', (req, res) => {
 // ---------------------------------------------------------
 // PORTE 3 : Webhooks Marketplace (Installation/Désinstallation)
 // ---------------------------------------------------------
-app.post('/install', (req, res) => {
+app.post('/install', async (req, res) => {
     console.log('📥 [Webhook Install] Received:', req.body);
-    // TODO: Dans une vraie app multi-clients, sauvegarder req.body.token associé à req.body.schoolId dans une base de données.
-    // Pour l'instant, on log juste et on valide.
-    res.status(200).send("App successfully installed");
+
+    try {
+        const { schoolId, token } = req.body;
+
+        if (schoolId && token) {
+            // Stocker le token pour cette école dans Vercel KV
+            await kv.set(`school:${schoolId}:token`, token);
+            console.log(`✅ [Install] Token saved for school: ${schoolId}`);
+        }
+
+        res.status(200).send("App successfully installed");
+    } catch (error) {
+        console.error('❌ [Install Error]', error.message);
+        res.status(500).send("Error installing app");
+    }
 });
 
-app.post('/uninstall', (req, res) => {
+app.post('/uninstall', async (req, res) => {
     console.log('🗑️ [Webhook Uninstall] Received:', req.body);
-    // TODO: Supprimer les données de l'école dans la base de données.
-    res.status(200).send("App successfully uninstalled");
+
+    try {
+        const { schoolId } = req.body;
+
+        if (schoolId) {
+            // Supprimer le token pour cette école
+            await kv.del(`school:${schoolId}:token`);
+            console.log(`✅ [Uninstall] Token deleted for school: ${schoolId}`);
+        }
+
+        res.status(200).send("App successfully uninstalled");
+    } catch (error) {
+        console.error('❌ [Uninstall Error]', error.message);
+        res.status(500).send("Error uninstalling app");
+    }
 });
 
 // ---------------------------------------------------------
