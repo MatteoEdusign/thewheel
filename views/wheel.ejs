@@ -15,8 +15,8 @@
             --edusign-yellow: #FFD78B;
             --edusign-blue-green: #1C414D;
             --edusign-green: #B1E1B9;
-            --bg-color: #F9F9F9;
-            /* Fond très clair et pro */
+            --bg-color: #FFFFFF;
+            /* Fond blanc */
             --text-color: #1C414D;
         }
 
@@ -72,19 +72,31 @@
             border: 8px solid white;
         }
 
-        /* Le pointeur (Triangle) */
+        /* Le pointeur (Triangle fun avec gradient) */
         .pointer {
             position: absolute;
-            top: -20px;
+            top: -15px;
             left: 50%;
             transform: translateX(-50%);
-            width: 0;
-            height: 0;
-            border-left: 25px solid transparent;
-            border-right: 25px solid transparent;
-            border-top: 50px solid var(--edusign-blue-green);
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--edusign-yellow) 0%, var(--edusign-green) 50%, var(--edusign-blue-green) 100%);
+            clip-path: polygon(50% 100%, 0% 0%, 100% 0%);
             z-index: 10;
-            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+            filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.25));
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: translateX(-50%) scale(1);
+            }
+
+            50% {
+                transform: translateX(-50%) scale(1.1);
+            }
         }
 
         /* Le bouton central */
@@ -115,10 +127,12 @@
             width: 100px;
             height: 100px;
             font-weight: 700;
-            font-size: 0.85rem;
+            font-size: 0.75rem;
             text-align: center;
-            padding: 5px;
+            padding: 8px;
             line-height: 1.2;
+            overflow: hidden;
+            word-break: break-word;
         }
 
         .center-circle img {
@@ -177,7 +191,7 @@
 
     <div id="mainContent">
         <h1>Qui participe ?</h1>
-        <p class="subtitle">Tirage au sort parmi les présents</p>
+        <p class="subtitle">Tirage au sort parmi les élèves</p>
 
         <div class="wheel-wrapper">
             <div class="pointer"></div>
@@ -200,7 +214,7 @@
         <div id="result-container" style="margin-top: 15px; text-align: center; min-height: 30px;">
             <div id="result"
                 style="font-size: 1.1rem; font-weight: 600; color: var(--edusign-blue-green); opacity: 0; transition: opacity 0.5s ease;">
-                L'élève sélectionné est : <span id="winnerName" style="color: #D35400; font-weight: 700;"></span>
+                L'élève sélectionné est : <span id="winnerName" style="font-weight: 700;"></span> !
             </div>
         </div>
     </div>
