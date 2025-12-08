@@ -48,7 +48,7 @@ app.post('/edusign-action', (req, res) => {
             "id": "iframe_blk",
             "block": "iframe",
             "url": `${myHost}/wheel-view?course_id=${courseId}&school_id=${schoolId}`,
-            "height": "650px"
+            "height": "550px"
         }
     ];
 

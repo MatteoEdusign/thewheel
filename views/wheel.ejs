@@ -84,19 +84,6 @@
             clip-path: polygon(50% 100%, 0% 0%, 100% 0%);
             z-index: 10;
             filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.25));
-            animation: pulse 2s ease-in-out infinite;
-        }
-
-        @keyframes pulse {
-
-            0%,
-            100% {
-                transform: translateX(-50%) scale(1);
-            }
-
-            50% {
-                transform: translateX(-50%) scale(1.1);
-            }
         }
 
         /* Le bouton central */
@@ -261,7 +248,7 @@
 
     <div class="lang-switcher">
         <button class="lang-btn active" onclick="setLanguage('fr')" title="Français">🇫🇷</button>
-        <button class="lang-btn" onclick="setLanguage('en')" title="English">🇬🇧</button>
+        <button class="lang-btn" onclick="setLanguage('en')" title="English">EN</button>
         <button class="lang-btn" onclick="setLanguage('es')" title="Español">🇪🇸</button>
     </div>
 
