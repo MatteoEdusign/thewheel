@@ -200,5 +200,53 @@ app.get('/', (req, res) => {
     res.json({ status: 'ok', message: '🎡 The Wheel is running!' });
 });
 
+// ---------------------------------------------------------
+// TEST : Vérifier que Vercel KV fonctionne
+// ---------------------------------------------------------
+app.get('/test-kv', async (req, res) => {
+    try {
+        const testSchoolId = 'test-school-123';
+        const testToken = 'test-token-abc-' + Date.now();
+
+        // 1. Écrire
+        await kv.set(`school:${testSchoolId}:token`, testToken);
+        console.log('✅ [Test KV] Write successful');
+
+        // 2. Lire
+        const readToken = await kv.get(`school:${testSchoolId}:token`);
+        console.log('✅ [Test KV] Read successful:', readToken);
+
+        // 3. Supprimer (nettoyage)
+        await kv.del(`school:${testSchoolId}:token`);
+        console.log('✅ [Test KV] Delete successful');
+
+        // 4. Vérifier
+        if (readToken === testToken) {
+            res.json({
+                success: true,
+                message: '🎉 Vercel KV fonctionne parfaitement !',
+                details: {
+                    written: testToken,
+                    read: readToken,
+                    match: true
+                }
+            });
+        } else {
+            res.status(500).json({
+                success: false,
+                message: '❌ Les valeurs ne correspondent pas',
+                details: { written: testToken, read: readToken }
+            });
+        }
+    } catch (error) {
+        console.error('❌ [Test KV] Error:', error);
+        res.status(500).json({
+            success: false,
+            message: '❌ Erreur de connexion à Vercel KV',
+            error: error.message
+        });
+    }
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`🎡 Serveur prêt sur le port ${PORT}`));
