@@ -149,18 +149,18 @@ app.post('/uninstall', (req, res) => {
 });
 
 // ---------------------------------------------------------
-// PORTE 4 : Pages Légales & Support (Obligatoires)
+// PORTE 4 : Pages Légales & Support (Redirections Edusign)
 // ---------------------------------------------------------
 app.get('/privacy', (req, res) => {
-    res.render('legal', { title: 'Politique de Confidentialité', content: 'Voici la politique de confidentialité...' });
+    res.redirect('https://www.edusign.fr/politique-de-confidentialite/');
 });
 
 app.get('/terms', (req, res) => {
-    res.render('legal', { title: "Conditions Générales d'Utilisation", content: "Voici les conditions d'utilisation..." });
+    res.redirect('https://www.edusign.fr/cgu/');
 });
 
 app.get('/support', (req, res) => {
-    res.render('legal', { title: 'Support Technique', content: 'Contactez-nous à support@example.com pour toute aide.' });
+    res.redirect('https://www.edusign.fr/contact/');
 });
 
 // Health check
