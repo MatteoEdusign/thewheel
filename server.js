@@ -132,6 +132,37 @@ app.get('/demo', (req, res) => {
     res.render('wheel', { students: JSON.stringify(demoStudents) });
 });
 
+// ---------------------------------------------------------
+// PORTE 3 : Webhooks Marketplace (Installation/Désinstallation)
+// ---------------------------------------------------------
+app.post('/install', (req, res) => {
+    console.log('📥 [Webhook Install] Received:', req.body);
+    // TODO: Dans une vraie app multi-clients, sauvegarder req.body.token associé à req.body.schoolId dans une base de données.
+    // Pour l'instant, on log juste et on valide.
+    res.status(200).send("App successfully installed");
+});
+
+app.post('/uninstall', (req, res) => {
+    console.log('🗑️ [Webhook Uninstall] Received:', req.body);
+    // TODO: Supprimer les données de l'école dans la base de données.
+    res.status(200).send("App successfully uninstalled");
+});
+
+// ---------------------------------------------------------
+// PORTE 4 : Pages Légales & Support (Obligatoires)
+// ---------------------------------------------------------
+app.get('/privacy', (req, res) => {
+    res.render('legal', { title: 'Politique de Confidentialité', content: 'Voici la politique de confidentialité...' });
+});
+
+app.get('/terms', (req, res) => {
+    res.render('legal', { title: "Conditions Générales d'Utilisation", content: "Voici les conditions d'utilisation..." });
+});
+
+app.get('/support', (req, res) => {
+    res.render('legal', { title: 'Support Technique', content: 'Contactez-nous à support@example.com pour toute aide.' });
+});
+
 // Health check
 app.get('/', (req, res) => {
     res.json({ status: 'ok', message: '🎡 The Wheel is running!' });

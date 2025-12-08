@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+        <%= title %> - Edusign Wheel
+    </title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --edusign-blue-green: #1C414D;
+            --bg-color: #FFFFFF;
+            --text-color: #1C414D;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            padding: 40px;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: var(--edusign-blue-green);
+            border-bottom: 2px solid #FFD78B;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        .content {
+            background: #F9F9F9;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        a {
+            color: var(--edusign-blue-green);
+            font-weight: 600;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>
+        <%= title %>
+    </h1>
+    <div class="content">
+        <p>
+            <%= content %>
+        </p>
+        <p><em>Ceci est une page générique pour la validation Marketplace.</em></p>
+    </div>
+</body>
+
+</html>
