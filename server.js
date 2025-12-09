@@ -1,8 +1,14 @@
 const express = require('express');
 const axios = require('axios');
 const path = require('path');
-const { kv } = require('@vercel/kv');
+const { Pool } = require('pg');
 const app = express();
+
+// Connexion PostgreSQL (Replit fournit DATABASE_URL automatiquement)
+const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false
+});
 
 // Middleware pour parser le JSON et les données URL-encoded (form-data)
 app.use(express.json());
@@ -18,10 +24,16 @@ app.use(express.static(path.join(__dirname, 'public')));
 async function getApiKeyForSchool(schoolId) {
     if (!schoolId) return process.env.EDUSIGN_API_KEY; // Fallback pour démo/test
     try {
-        const token = await kv.get(`school:${schoolId}:token`);
-        return token || process.env.EDUSIGN_API_KEY; // Fallback si pas trouvé
+        const result = await pool.query(
+            'SELECT token FROM school_tokens WHERE school_id = $1',
+            [schoolId]
+        );
+        if (result.rows.length > 0) {
+            return result.rows[0].token;
+        }
+        return process.env.EDUSIGN_API_KEY; // Fallback si pas trouvé
     } catch (error) {
-        console.error('❌ [KV Error] Failed to get token:', error.message);
+        console.error('❌ [DB Error] Failed to get token:', error.message);
         return process.env.EDUSIGN_API_KEY; // Fallback en cas d'erreur
     }
 }
@@ -39,7 +51,7 @@ app.post('/edusign-action', (req, res) => {
     console.log(`📍 [Edusign Action] courseId: ${courseId}, schoolId: ${schoolId}`);
 
     // Gestion propre de l'URL
-    let myHost = process.env.APP_URL || "https://thewheel-henna.vercel.app";
+    let myHost = process.env.APP_URL || "https://thewheel-edusign.replit.app";
     if (myHost.endsWith('/')) myHost = myHost.slice(0, -1);
 
     // On passe le schoolId dans l'URL pour pouvoir récupérer le bon token
@@ -149,8 +161,14 @@ app.post('/install', async (req, res) => {
         const { schoolId, token } = req.body;
 
         if (schoolId && token) {
-            // Stocker le token pour cette école dans Vercel KV
-            await kv.set(`school:${schoolId}:token`, token);
+            // Stocker le token pour cette école (INSERT ou UPDATE si existe déjà)
+            await pool.query(
+                `INSERT INTO school_tokens (school_id, token) 
+                 VALUES ($1, $2) 
+                 ON CONFLICT (school_id) 
+                 DO UPDATE SET token = $2, created_at = CURRENT_TIMESTAMP`,
+                [schoolId, token]
+            );
             console.log(`✅ [Install] Token saved for school: ${schoolId}`);
         }
 
@@ -169,7 +187,10 @@ app.post('/uninstall', async (req, res) => {
 
         if (schoolId) {
             // Supprimer le token pour cette école
-            await kv.del(`school:${schoolId}:token`);
+            await pool.query(
+                'DELETE FROM school_tokens WHERE school_id = $1',
+                [schoolId]
+            );
             console.log(`✅ [Uninstall] Token deleted for school: ${schoolId}`);
         }
 
@@ -201,30 +222,40 @@ app.get('/', (req, res) => {
 });
 
 // ---------------------------------------------------------
-// TEST : Vérifier que Vercel KV fonctionne
+// TEST : Vérifier que la base de données fonctionne
 // ---------------------------------------------------------
-app.get('/test-kv', async (req, res) => {
+app.get('/test-db', async (req, res) => {
     try {
-        const testSchoolId = 'test-school-123';
-        const testToken = 'test-token-abc-' + Date.now();
+        const testSchoolId = 'test-school-' + Date.now();
+        const testToken = 'test-token-abc';
 
         // 1. Écrire
-        await kv.set(`school:${testSchoolId}:token`, testToken);
-        console.log('✅ [Test KV] Write successful');
+        await pool.query(
+            'INSERT INTO school_tokens (school_id, token) VALUES ($1, $2)',
+            [testSchoolId, testToken]
+        );
+        console.log('✅ [Test DB] Write successful');
 
         // 2. Lire
-        const readToken = await kv.get(`school:${testSchoolId}:token`);
-        console.log('✅ [Test KV] Read successful:', readToken);
+        const result = await pool.query(
+            'SELECT token FROM school_tokens WHERE school_id = $1',
+            [testSchoolId]
+        );
+        const readToken = result.rows[0]?.token;
+        console.log('✅ [Test DB] Read successful:', readToken);
 
         // 3. Supprimer (nettoyage)
-        await kv.del(`school:${testSchoolId}:token`);
-        console.log('✅ [Test KV] Delete successful');
+        await pool.query(
+            'DELETE FROM school_tokens WHERE school_id = $1',
+            [testSchoolId]
+        );
+        console.log('✅ [Test DB] Delete successful');
 
         // 4. Vérifier
         if (readToken === testToken) {
             res.json({
                 success: true,
-                message: '🎉 Vercel KV fonctionne parfaitement !',
+                message: '🎉 PostgreSQL fonctionne parfaitement !',
                 details: {
                     written: testToken,
                     read: readToken,
@@ -239,10 +270,10 @@ app.get('/test-kv', async (req, res) => {
             });
         }
     } catch (error) {
-        console.error('❌ [Test KV] Error:', error);
+        console.error('❌ [Test DB] Error:', error);
         res.status(500).json({
             success: false,
-            message: '❌ Erreur de connexion à Vercel KV',
+            message: '❌ Erreur de connexion à PostgreSQL',
             error: error.message
         });
     }
